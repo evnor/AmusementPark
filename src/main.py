@@ -3,9 +3,9 @@ This is merely a quick and dirty example. It doesn't provide any support for
 customisation, extending functionality, or more extensive data collection.
 """
 import constants as const
-from classes import *
+from classes import RunResult, Group, State
 import plots as plt
-from typing import List, Tuple
+from typing import List
 import random
 
 def generate_groups(time: int) -> List[Group]:
@@ -39,66 +39,70 @@ def generate_groups_fancy(time: int, dist: List[int], line_length: int, busyness
     # How busy it is in the park
     # Length of the line 
 
-def step_time(line: List[Group], time: int) -> (List[Group], List[Group]):
+def step_time(state: State, time: int, use_srq: bool) -> State:
     """Generates new groups and loads a single boat. Returns line, departed_groups
     Looks forward MAX_LINE_SKIP groups to load the boat. (so skipping is possible)
     """
 
     # People arrive
-    # line.extend(generate_groups(time))
+    arrivals = generate_groups(time)
+    # arrivals = generate_groups_fancy(time, [1,1,1,1,1,1,1], 5, 1, 8)
     
-    line.extend(generate_groups_fancy(time, [1,1,1,1,1,1,1], 5, 1, 8)) # example parameters
+    # Sort groups into SRQ, if necessary
+    if use_srq:
+        for group in arrivals:
+            if group.size == 1:
+                state.srq.append(group)
+            else:
+                state.line.append(group)
+    else:
+        state.line.extend(arrivals)
     
-    # This is sufficient for first come first serve
     # Load the boat and keep track of departed groups
-
-    # remaining = const.BOAT_CAPACITY
-    # departed = []
-    # while len(line) > 0 and remaining >= line[0][0]:        
-    #    departed.append(line.pop(0))
-    #    remaining -= departed[-1][0]
-    # return line, departed
-    
     remaining = const.BOAT_CAPACITY
     departed = []
-    while len(line) > 0:
-        line[0:const.MAX_LINE_SKIP]
-        options = [index for index, option in enumerate(line[0:const.MAX_LINE_SKIP]) if option.size <= remaining]
+    while len(state.line) > 0:
+        options = [index for index, option in enumerate(state.line[0:const.MAX_LINE_SKIP]) if option.size <= remaining]
         if len(options) > 0:
-            departed.append(line.pop(options[0]))
+            departed.append(state.line.pop(options[0]))
             remaining -= departed[-1].size
         else:
             break
+    
+    if use_srq:
+        while len(state.srq) > 0 and remaining > 0:
+            departed.append(state.srq.pop(0))
+            remaining -= 1
+            
+    state.departed_groups = departed
+    
+    return state
 
-    return line, departed
-
-def perf_timesteps(n: int) -> RunResult:
+def perf_timesteps(n: int, use_srq: bool) -> RunResult:
     """Simulate a day of n timesteps. 
     Returns two DataFrames, one containing info about the timesteps, 
     the other containing info about groups
     """
     # Initialize variables to keep track of data
-    line = []
+    state = State(use_srq)
     results = RunResult()
     
     for time in range(n):
-        line, departed_groups = step_time(line, time) # Step forward 1 timestep
+        state = step_time(state, time, use_srq) # Step forward 1 timestep
         
         # Add data to df_timesteps. The time, line length and boat occupancy are tracked
-        results.add_timestep(time, line, departed_groups)
+        results.add_timestep(time, state)
         
         # Add data to df_groups. One row per group, keeping track of sizes and times.
-        results.add_groups(time, departed_groups)
+        results.add_groups(time, state)
+        print(state)
+        state.departed_groups = None
         
-        print(line)
-
     return results
 
 
 if __name__ == "__main__":
     #print(generate_groups_fancy(28, [1,1,1,1,1,1,1], 5, 1, 8))
-    result = perf_timesteps(200)
+    result = perf_timesteps(200, True)
     plt.create_plots_single(result)
     # print(step_time([(2, 28), (1, 28), (6, 28), (6, 28), (6, 28), (6, 28), (2, 28), (1, 28), (6, 28)], 28))
-
-# %%
