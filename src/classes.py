@@ -33,7 +33,7 @@ class State:
 
     def __str__(self) -> str:
         return "Line: {}, SRQ: {}, Departed: {}".format(len(self.line), len(self.srq), len(self.departed_groups))
-   
+  
     
 class RunResult:
     
@@ -61,5 +61,3 @@ class RunResult:
                                'wait time': time - group.arrival_time
                 })
         self.groups = self.groups.append(group_rows, ignore_index=True)
- 
-
