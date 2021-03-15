@@ -20,15 +20,12 @@ from sklearn.model_selection import train_test_split
 
 def create_plots_single(run: RunResult):
     
-    #Bar chart that shows the line length vs the time of day ie busiest times 
-    #with superimposed line graph
+    #Line chart that shows the line length vs the time of day ie busiest times 
     fig, ax = plt.subplots(nrows=1, ncols=1, squeeze=False, sharex=True, sharey=True, figsize=(5,5))
-    plt.plot(x=run.timesteps['time'], y = run.timesteps['line length'], ax=ax[0,0])
-    plt.bar(x = run.timesteps['time'], y = run.timesteps['line length'], ax=ax[0,0])
-    plt.title('Variation in Line Length by Time of Day')
-    plt.xlabel('Time of Day (hour)')
-    plt.ylabel('Line Length')
-    plt.show();
+    run.timesteps['line length'].plot(ax=ax[0,0])
+    ax[0,0].set_title('Variation in Line Length by Time of Day')
+    ax[0,0].set_xlabel('Timesteps')
+    ax[0,0].set_ylabel('Line Length');
     
 
 def plot_compare_srq(normalRun: RunResult, srqRun: RunResult):
