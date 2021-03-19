@@ -20,12 +20,25 @@ from sklearn.model_selection import train_test_split
 
 def create_plots_single(run: RunResult):
     
-    #Line chart that shows the line length vs the time of day ie busiest times 
-    fig, ax = plt.subplots(nrows=1, ncols=1, squeeze=False, sharex=True, sharey=True, figsize=(5,5))
-    run.timesteps['line length'].plot(ax=ax[0,0])
+    # #Line chart that shows the line length vs the time of day ie busiest times 
+    fig, ax = plt.subplots(nrows=1, ncols=3, squeeze=False, sharex=False, sharey=False, figsize=(20,5))
+    
+    run.timesteps['line length'].plot(color='orange', ax=ax[0,0])
     ax[0,0].set_title('Variation in Line Length by Time of Day')
     ax[0,0].set_xlabel('Timesteps')
     ax[0,0].set_ylabel('Line Length');
+    
+    #Histogram of the waiting times
+    ax[0,1] = sns.distplot(run.groups['wait time'], bins=20, color='b', ax=ax[0, 1])
+    ax[0,1].set_title("Histogram of the waiting time")
+    ax[0,1].set_xlabel("Timesteps")
+    ax[0,1].set_ylabel("Wait Time");
+    
+    # #Histogram of the queue lengths
+    ax[0,2] = sns.distplot(run.timesteps['line length'], bins=20, color='r', ax=ax[0, 2])
+    ax[0,2].set_title("Histogram of the line length")
+    ax[0,2].set_xlabel("Timesteps")
+    ax[0,2].set_ylabel("Line length");
     
 
 def plot_compare_srq(normalRun: RunResult, srqRun: RunResult):
@@ -49,3 +62,5 @@ def plot_compare_srq(normalRun: RunResult, srqRun: RunResult):
     ax[0,0].set_ylabel('Wait Time (min)')
     ax[0,0].set_xlabel('Group Size')
     ax[0,1].set_xlabel('Group Size');
+    
+    
