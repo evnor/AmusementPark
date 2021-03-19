@@ -6,13 +6,16 @@ import constants as const
 from classes import RunResult, Group, State
 import plots as plt
 from typing import List
+import numpy as np
 import random
 
-def generate_groups(time: int) -> List[Group]:
+def generate_groups(time: int, dist: List[int]) -> List[Group]:
     """Generates the groups to be added to the line.
     Groups are tuples of ints in the form (size, arrival_time).
     """
-    return [Group(random.randint(1,7), time) for _ in range(random.randint(1,2))]
+    ngroups = np.random.poisson(lam = const.AVERAGE_GROUPS)
+    sizes = random.choices(list(range(1, const.MAX_GROUP_SIZE + 1)), dist, k=ngroups)
+    return [Group(n, time) for n in sizes]
 
 def generate_groups_fancy(time: int, dist: List[int], line_length: int, busyness: float, line_target: int)-> List[Group]:
     """
@@ -45,7 +48,7 @@ def step_time(state: State, time: int, use_srq: bool) -> State:
     """
 
     # People arrive
-    arrivals = generate_groups(time)
+    arrivals = generate_groups(time, [1,1,1,1,1,1,1])
     # arrivals = generate_groups_fancy(time, [1,1,1,1,1,1,1], 5, 1, 8)
     
     # Sort groups into SRQ, if necessary
@@ -95,14 +98,20 @@ def perf_timesteps(n: int, use_srq: bool) -> RunResult:
         
         # Add data to df_groups. One row per group, keeping track of sizes and times.
         results.add_groups(time, state)
-        print(state)
+        # print(state)
         state.departed_groups = None
         
     return results
 
+def multiple_runs(nruns: int):
+    results = []
+    for _ in range(nruns):
+        results.append(perf_timesteps(n, use_srq))
+    # Gather together of multiple RunResults
+    
 
 if __name__ == "__main__":
     #print(generate_groups_fancy(28, [1,1,1,1,1,1,1], 5, 1, 8))
-    result = perf_timesteps(200, True)
+    result = perf_timesteps(const.timesteps_in_day(), False)
     plt.create_plots_single(result)
     # print(step_time([(2, 28), (1, 28), (6, 28), (6, 28), (6, 28), (6, 28), (2, 28), (1, 28), (6, 28)], 28))
