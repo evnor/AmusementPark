@@ -160,14 +160,16 @@ def do_lineskip_plotting():
     plt.plot_lineskip(data)
 
 if __name__ == "__main__":
-    # result = perf_timesteps(100, False)
+    result_without_srq = perf_timesteps(200, False)
     # pickle_save(result, 'test')
     # result = pickle_load('test')
     # plt.create_plots_single(result)
     # do_average_group_plotting()
     do_lineskip_plotting()
     
-    # result = perf_n_runs(5,100,True)
+    
+    result_with_srq = perf_n_runs(5,200,True)
     # print(len(result.timesteps))
     # print(result.timesteps)
     # print(result.groups)
+    plt.plot_compare_srq(result_without_srq, result_with_srq)
