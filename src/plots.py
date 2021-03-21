@@ -7,6 +7,7 @@ import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns  
+from typing import Tuple
 sns.set()
 plt.rcParams['figure.figsize'] = 10, 5  
 plt.rcParams['lines.markeredgewidth'] = 1  
@@ -69,6 +70,12 @@ def get_performance_stats_ungrouped(data: List[RunResult]) -> pd.DataFrame:
     df = pd.DataFrame(data=grouped, columns=['mean wait time'], index=data.keys())
     return df
 
+def get_avg_occupancy(data: List[RunResult]) -> pd.DataFrame:
+    timesteps = [result.timesteps for avg, result in data.items()]
+    grouped = [df_timesteps['boat occupancy'].mean() for df_timesteps in timesteps]
+    df = pd.DataFrame(data=grouped, columns=['mean occupancy'], index=data.keys())
+    return df
+
 def plot_average_groups(data: List[RunResult]) -> None:
     timesteps = [res.timesteps for res in data.values()]
     groups = [res.groups for res in data.values()]
@@ -81,5 +88,12 @@ def plot_average_groups(data: List[RunResult]) -> None:
                      names=['avg arrivals', 'run', 'idx']
                      )
     timesteps.groupby(by='avg arrivals').plot(x='time', y='line length')
-    
-    
+
+def plot_lineskip(data: Tuple[List[RunResult], List[RunResult]]) -> None:
+    nonsrq, srq = data
+    stats_nonsrq = get_avg_occupancy(nonsrq)
+    stats_srq = get_avg_occupancy(srq)
+    print(stats_nonsrq)
+    print(stats_srq)
+    ax = stats_nonsrq.plot()
+    stats_srq.plot(ax=ax)
