@@ -7,7 +7,9 @@ from classes import RunResult, Group, State
 import plots as plt
 from typing import List
 import numpy as np
+import pandas as pd
 import random
+import pickle
 
 def generate_groups(time: int, dist: List[int]) -> List[Group]:
     """Generates the groups to be added to the line.
@@ -88,7 +90,7 @@ def perf_timesteps(n: int, use_srq: bool) -> RunResult:
     """
     # Initialize variables to keep track of data
     state = State(use_srq)
-    results = RunResult()
+    results = RunResult(use_srq)
     
     for time in range(n):
         state = step_time(state, time, use_srq) # Step forward 1 timestep
@@ -103,15 +105,49 @@ def perf_timesteps(n: int, use_srq: bool) -> RunResult:
         
     return results
 
-def multiple_runs(nruns: int):
+def pickle_save(obj: object, filename: str) -> None:
+    """Saves obj to ../pickles/filename.pickle using the pickle library
+    """
+    with open(f'../pickles/{filename}.pickle', 'wb') as f:
+        pickle.dump(obj, f)
+
+def pickle_load(filename: str) -> object:
+    """Loads obj from ../pickles/filename.pickle using the pickle library
+    """
+    with open(f'../pickles/{filename}.pickle', 'rb') as f:
+        return pickle.load(f)
+
+def join_runresults(results: List[RunResult]) -> RunResult:
+    """Join the dataframes of a list of RunResults.
+    """
+    timesteps = [res.timesteps for res in results]
+    groups = [res.groups for res in results]
+    timesteps = pd.concat(timesteps, 
+                     keys=list(range(len(results)))
+                     )
+    groups = pd.concat(groups,  
+                     keys=list(range(len(results)))
+                     )
+    joined = RunResult(results[0].use_srq)
+    joined.timesteps = timesteps
+    joined.groups = groups
+    return joined
+    
+
+def perf_n_runs(nruns: int, n_timesteps: int, use_srq:bool) -> RunResult:
     results = []
     for _ in range(nruns):
-        results.append(perf_timesteps(n, use_srq))
-    # Gather together of multiple RunResults
+        results.append(perf_timesteps(n_timesteps, use_srq))
+    return join_runresults(results)
     
 
 if __name__ == "__main__":
-    #print(generate_groups_fancy(28, [1,1,1,1,1,1,1], 5, 1, 8))
-    result = perf_timesteps(const.timesteps_in_day(), False)
-    plt.create_plots_single(result)
-    # print(step_time([(2, 28), (1, 28), (6, 28), (6, 28), (6, 28), (6, 28), (2, 28), (1, 28), (6, 28)], 28))
+    # result = perf_timesteps(100, False)
+    # pickle_save(result, 'test')
+    # result = pickle_load('test')
+    # plt.create_plots_single(result)
+    
+    # result = perf_n_runs(5,100,True)
+    # print(len(result.timesteps))
+    # print(result.timesteps)
+    # print(result.groups)

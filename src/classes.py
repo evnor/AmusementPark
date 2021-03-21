@@ -37,19 +37,23 @@ class State:
     
 class RunResult:
     
-    def __init__(self):
+    def __init__(self, use_srq: bool):
         self.timesteps = pd.DataFrame(columns = const.COLS_TIMESTEPS, dtype='float')
         self.timesteps.set_index('time')
         self.groups = pd.DataFrame(columns = const.COLS_GROUPS, dtype='float')
+        self.use_srq = True
     
     timesteps: pd.DataFrame
     groups: pd.DataFrame
+    use_srq: bool
     
     def add_timestep(self, time: int, state: State):
         timestep_row = {'time': time, 
                    'line length': len(state.line), 
                    'boat occupancy': sum(t.size for t in state.departed_groups)
                    }
+        if self.use_srq:
+            timestep_row['srq length'] = len(state.srq)
         self.timesteps = self.timesteps.append(timestep_row, ignore_index=True)
         
     def add_groups(self, time: int, state: State):
