@@ -17,43 +17,23 @@ def generate_groups(time: int, dist: List[int]) -> List[Group]:
     Groups are tuples of ints in the form (size, arrival_time).
     """
     ngroups = np.random.poisson(lam = const.AVERAGE_GROUPS)
+    return generate_n_groups(time, dist, ngroups)
+
+def generate_n_groups(time: int, dist: List[int], ngroups: int) -> List[Group]:
     sizes = random.choices(list(range(1, const.MAX_GROUP_SIZE + 1)), dist, k=ngroups)
     return [Group(n, time) for n in sizes]
 
-def generate_groups_fancy(time: int, dist: List[int], line_length: int, busyness: float, line_target: int)-> List[Group]:
-    """
-    Generates the groups to be added to the line.
-    Groups are tuples of ints in the form (size, arrival_time).
-    This one is more fancy because it takes the distribution and busyness into consideration.
-    line_length is the current line length, and the line_target is the length,
-    before visitors start to get discouraged by line_length.
-    dist is a list of weights, for each group size. For example: [7,6,5,4,3,2,1]
-    """
-    
-    if line_length < line_target:
-        groups = random.randint(1,4)
-    else:
-        if random.uniform(0,1) < busyness:
-            groups = random.randint(0,1)
-        else:
-            groups = 0
-    sizes = random.choices(list(range(1, const.MAX_GROUP_SIZE + 1)), dist, k = groups)
-    return [Group(n, time) for n in sizes]
-        
-    
-    # Parameters of group size distribution 
-    # How busy it is in the park
-    # Length of the line 
-
-def step_time(state: State, time: int, use_srq: bool) -> State:
+def step_time(state: State, time: int, use_srq: bool, infinite: bool=False) -> State:
     """Generates new groups and loads a single boat. Returns line, departed_groups
     Looks forward MAX_LINE_SKIP groups to load the boat. (so skipping is possible)
     """
 
-    # People arrive
-    arrivals = generate_groups(time, [1,1,1,1,1,1,1])
-    # arrivals = generate_groups_fancy(time, [1,1,1,1,1,1,1], 5, 1, 8)
-    
+    if not infinite:
+        # People arrive
+        arrivals = generate_groups(time, [1,1,1,1,1,1,1])
+    else:
+        arrivals = generate_n_groups(time, [1,1,1,1,1,1,1], 7 + const.lineskip - len(state.line))
+        
     # Sort groups into SRQ, if necessary
     if use_srq:
         for group in arrivals:
@@ -84,7 +64,7 @@ def step_time(state: State, time: int, use_srq: bool) -> State:
     
     return state
 
-def perf_timesteps(n: int, use_srq: bool) -> RunResult:
+def perf_timesteps(n: int, use_srq: bool, infinite: bool=False) -> RunResult:
     """Simulate a day of n timesteps. 
     Returns two DataFrames, one containing info about the timesteps, 
     the other containing info about groups
@@ -94,7 +74,7 @@ def perf_timesteps(n: int, use_srq: bool) -> RunResult:
     results = RunResult(use_srq)
     
     for time in range(n):
-        state = step_time(state, time, use_srq) # Step forward 1 timestep
+        state = step_time(state, time, use_srq, infinite=infinite) # Step forward 1 timestep
         
         # Add data to df_timesteps. The time, line length and boat occupancy are tracked
         results.add_timestep(time, state)
@@ -139,7 +119,7 @@ def join_runresults(results: List[RunResult]) -> RunResult:
     return joined
     
 
-def perf_n_runs(nruns: int, n_timesteps: int, use_srq:bool) -> RunResult:
+def perf_n_runs(nruns: int, n_timesteps: int, use_srq:bool, infinite: bool=False) -> RunResult:
     """ Performs nruns runs and joins the results.
     
     Assumption:
@@ -147,7 +127,7 @@ def perf_n_runs(nruns: int, n_timesteps: int, use_srq:bool) -> RunResult:
     """
     results = []
     for _ in range(nruns):
-        results.append(perf_timesteps(n_timesteps, use_srq))
+        results.append(perf_timesteps(n_timesteps, use_srq, infinite=infinite))
     return join_runresults(results)
 
 def gather_average_group_data(filename: str):
@@ -158,18 +138,34 @@ def gather_average_group_data(filename: str):
         results[average_arrivals / 20] = perf_n_runs(5, const.timesteps_in_day(), False)
         print(average_arrivals)
     pickle_save(results, filename)
+    
+def gather_skip_data(filename: str):
+    nonsrq = {}
+    srq = {}
+    for lineskip in range(6, 11):
+        const.MAX_LINE_SKIP = lineskip
+        nonsrq[lineskip] = perf_n_runs(5, const.timesteps_in_day(), False, infinite=True)
+        srq[lineskip] = perf_n_runs(5, const.timesteps_in_day(), True, infinite=True)
+        print(lineskip)
+    pickle_save((nonsrq, srq), filename)
 
 def do_average_group_plotting():
     gather_average_group_data('average_groups')
     data = pickle_load('average_groups')
     plt.plot_average_groups(data)
+    
+def do_lineskip_plotting():
+    gather_skip_data('lineskip_from_6')
+    data = pickle_load('lineskip')
+    plt.plot_lineskip(data)
 
 if __name__ == "__main__":
     result_without_srq = perf_timesteps(200, False)
     # pickle_save(result, 'test')
     # result = pickle_load('test')
-    plt.create_plots_single(result_without_srq)
-    #do_average_group_plotting()
+    # plt.create_plots_single(result)
+    # do_average_group_plotting()
+    do_lineskip_plotting()
     
     
     result_with_srq = perf_n_runs(5,200,True)
