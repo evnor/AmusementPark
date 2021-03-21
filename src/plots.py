@@ -37,31 +37,32 @@ def create_plots_single(run: RunResult) -> None:
     # #Histogram of the queue lengths
     ax[0,2] = sns.distplot(run.timesteps['line length'], bins=20, color='r', ax=ax[0, 2])
     ax[0,2].set_title("Histogram of the line length")
-    ax[0,2].set_xlabel("Timesteps")
-    ax[0,2].set_ylabel("Line length");
+    ax[0,2].set_xlabel("Line Length")
+    #ax[0,2].set_ylabel("Line length");
     
 
 def plot_compare_srq(normalRun: RunResult, srqRun: RunResult) -> None:
     # When we have an SRQ: (plot describing boat occupancy of SRQ vs NoSRQ)
-    fig, ax = plt.subplots(ncols=2, squeeze=False, sharex=False, sharey=True, figsize=(5,7))
-    sns.violinplot(data=srqRun.timesteps, x='time', y='occupancy', ax=ax[0,0])
-    sns.violinplot(data=normalRun.timesteps, x='time', y='occupancy', ax=ax[0,1])
+    fig, ax = plt.subplots(ncols=2, squeeze=False, sharex=False, sharey=False, figsize=(15,5))
+    sns.distplot(srqRun.timesteps['boat occupancy'], bins = 8, ax=ax[0,0])
+    sns.distplot(normalRun.timesteps['boat occupancy'], bins = 8, ax=ax[0,1])
     ax[0, 0].set_title('Boat Occupancy when Single Rider Queue is Active')
     ax[0, 1].set_title('Boat Occupancy without a Single Rider Queue')
-    ax[0, 0].set_xlabel('Timesteps')
-    ax[0, 1].set_xlabel('Timesteps')
-    ax[0, 0].set_ylabel('Boat Occupancy')
-    ax[0, 1].yaxis.set_visible(False);
+    ax[0, 0].set_xlabel('Boat Occupancy')
+    ax[0, 1].set_xlabel('Boat Occupancy')
+    # ax[0, 0].set_ylabel('Boat Occupancy')
+    # ax[0, 1].yaxis.set_visible(False);
     
     #box plot comparing wait time of groups for SRQ vs. nonSRQ
-    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(5,5))
+    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10,5))
     sns.boxplot(data=srqRun.groups, x='size', y='wait time', ax=ax[0]) #SRQ
     sns.boxplot(data=normalRun.groups, x='size' , y='wait time', ax=ax[1]) #nonSRQ
-    ax[0,0].set_title('Wait time (min) per group when SRQ is active')
-    ax[0,1].set_xlabel('Wait time (min) per group when SRQ is not active')
-    ax[0,0].set_ylabel('Wait Time (min)')
-    ax[0,0].set_xlabel('Group Size')
-    ax[0,1].set_xlabel('Group Size');
+    ax[0].set_title('Wait time (min) per group when SRQ is active')
+    ax[1].set_title('Wait time (min) per group when SRQ is not active')
+    ax[0].set_ylabel('Wait Time (min)')
+    ax[0].set_xlabel('Group Size')
+    ax[1].set_xlabel('Group Size')
+    ax[1].yaxis.set_visible(False);
 
 def get_performance_stats_ungrouped(data: List[RunResult]) -> pd.DataFrame:
     groups = [result.groups for avg, result in data.items()]
