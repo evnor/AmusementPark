@@ -123,10 +123,12 @@ def join_runresults(results: List[RunResult]) -> RunResult:
     timesteps = [res.timesteps for res in results]
     groups = [res.groups for res in results]
     timesteps = pd.concat(timesteps, 
-                     keys=list(range(len(results)))
+                     keys=list(range(len(results))),
+                     names=['run', 'idx']
                      )
     groups = pd.concat(groups,  
-                     keys=list(range(len(results)))
+                     keys=list(range(len(results))),
+                     names=['run', 'idx']
                      )
     joined = RunResult(results[0].use_srq)
     joined.timesteps = timesteps
@@ -135,6 +137,11 @@ def join_runresults(results: List[RunResult]) -> RunResult:
     
 
 def perf_n_runs(nruns: int, n_timesteps: int, use_srq:bool) -> RunResult:
+    """ Performs nruns runs and joins the results.
+    
+    Assumption:
+     * nruns, n_timesteps >= 1
+    """
     results = []
     for _ in range(nruns):
         results.append(perf_timesteps(n_timesteps, use_srq))
@@ -147,7 +154,7 @@ if __name__ == "__main__":
     # result = pickle_load('test')
     # plt.create_plots_single(result)
     
-    # result = perf_n_runs(5,100,True)
-    # print(len(result.timesteps))
-    # print(result.timesteps)
-    # print(result.groups)
+    result = perf_n_runs(5,100,True)
+    print(len(result.timesteps))
+    print(result.timesteps)
+    print(result.groups)
