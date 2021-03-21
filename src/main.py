@@ -11,6 +11,7 @@ import pandas as pd
 import random
 import pickle
 
+
 def generate_groups(time: int, dist: List[int]) -> List[Group]:
     """Generates the groups to be added to the line.
     Groups are tuples of ints in the form (size, arrival_time).
@@ -110,11 +111,13 @@ def pickle_save(obj: object, filename: str) -> None:
     """
     with open(f'../pickles/{filename}.pickle', 'wb') as f:
         pickle.dump(obj, f)
+        print(f'Saved {filename}.pickle')
 
 def pickle_load(filename: str) -> object:
     """Loads obj from ../pickles/filename.pickle using the pickle library
     """
     with open(f'../pickles/{filename}.pickle', 'rb') as f:
+        print(f'Loading {filename}.pickle')
         return pickle.load(f)
 
 def join_runresults(results: List[RunResult]) -> RunResult:
@@ -146,15 +149,29 @@ def perf_n_runs(nruns: int, n_timesteps: int, use_srq:bool) -> RunResult:
     for _ in range(nruns):
         results.append(perf_timesteps(n_timesteps, use_srq))
     return join_runresults(results)
-    
+
+def gather_average_group_data(filename: str):
+    const.MAX_LINE_SKIP = 1
+    results = {}
+    for average_arrivals in range(30, 41):
+        const.AVERAGE_GROUPS = average_arrivals / 20
+        results[average_arrivals / 20] = perf_n_runs(5, const.timesteps_in_day(), False)
+        print(average_arrivals)
+    pickle_save(results, filename)
+
+def do_average_group_plotting():
+    gather_average_group_data('average_groups')
+    data = pickle_load('average_groups')
+    plt.plot_average_groups(data)
 
 if __name__ == "__main__":
     # result = perf_timesteps(100, False)
     # pickle_save(result, 'test')
     # result = pickle_load('test')
     # plt.create_plots_single(result)
+    do_average_group_plotting()
     
-    result = perf_n_runs(5,100,True)
-    print(len(result.timesteps))
-    print(result.timesteps)
-    print(result.groups)
+    # result = perf_n_runs(5,100,True)
+    # print(len(result.timesteps))
+    # print(result.timesteps)
+    # print(result.groups)
