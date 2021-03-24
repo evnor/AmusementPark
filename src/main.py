@@ -1,7 +1,3 @@
-"""
-This is merely a quick and dirty example. It doesn't provide any support for
-customisation, extending functionality, or more extensive data collection.
-"""
 import constants as const
 from classes import RunResult, Group, State
 import plots as plt
@@ -32,7 +28,7 @@ def step_time(state: State, time: int, use_srq: bool, infinite: bool=False) -> S
         # People arrive
         arrivals = generate_groups(time, [1,1,1,1,1,1,1])
     else:
-        arrivals = generate_n_groups(time, [1,1,1,1,1,1,1], 7 + const.lineskip - len(state.line))
+        arrivals = generate_n_groups(time, [1,1,1,1,1,1,1], 7 + const.MAX_LINE_SKIP - len(state.line))
         
     # Sort groups into SRQ, if necessary
     if use_srq:
@@ -138,38 +134,50 @@ def gather_average_group_data(filename: str):
         results[average_arrivals / 20] = perf_n_runs(5, const.timesteps_in_day(), False)
         print(average_arrivals)
     pickle_save(results, filename)
+    return results
     
 def gather_skip_data(filename: str):
     nonsrq = {}
     srq = {}
-    for lineskip in range(6, 11):
+    for lineskip in range(1, 40):
         const.MAX_LINE_SKIP = lineskip
         nonsrq[lineskip] = perf_n_runs(5, const.timesteps_in_day(), False, infinite=True)
+        print('non-srq done', end='\t')
         srq[lineskip] = perf_n_runs(5, const.timesteps_in_day(), True, infinite=True)
-        print(lineskip)
+        print('srq done:', lineskip)
     pickle_save((nonsrq, srq), filename)
+    return (nonsrq, srq)
+
+def gather_stability_data(filename: str):
+    result = perf_n_runs(10, const.timesteps_in_day(), False)
+    pickle_save(result, filename)
+    return result
 
 def do_average_group_plotting():
-    gather_average_group_data('average_groups')
+    # data = gather_average_group_data('average_groups')
     data = pickle_load('average_groups')
     plt.plot_average_groups(data)
     
 def do_lineskip_plotting():
-    gather_skip_data('lineskip_from_6')
+    # data = gather_skip_data('lineskip')
     data = pickle_load('lineskip')
     plt.plot_lineskip(data)
+    
+def do_stability_plotting():
+    # data = gather_stability_data('stability')
+    data = pickle_load('stability')
+    plt.plot_stability(data, start=5)
 
 if __name__ == "__main__":
-    result_without_srq = perf_timesteps(200, False)
+    # result = perf_timesteps(100, False)
     # pickle_save(result, 'test')
     # result = pickle_load('test')
     # plt.create_plots_single(result)
     # do_average_group_plotting()
     do_lineskip_plotting()
+    # do_stability_plotting()
     
-    
-    result_with_srq = perf_n_runs(5,200,True)
+    # result = perf_n_runs(5,100,True)
     # print(len(result.timesteps))
     # print(result.timesteps)
     # print(result.groups)
-    plt.plot_compare_srq(result_without_srq, result_with_srq)
