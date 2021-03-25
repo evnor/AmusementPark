@@ -127,7 +127,9 @@ def perf_n_runs(nruns: int, n_timesteps: int, use_srq:bool, infinite: bool=False
         print('.', end='')
     return join_runresults(results)
 
-def gather_average_group_data(filename: str):
+def gather_average_group_data(filename: str) -> Dict[float, RunResult]:
+    """Gather the data for do_average_group_plotting. Save the data to filename.pickle.
+    """
     const.MAX_LINE_SKIP = 1
     results = {}
     for average_arrivals in range(30, 41):
@@ -137,7 +139,9 @@ def gather_average_group_data(filename: str):
     pickle_save(results, filename)
     return results
     
-def gather_skip_data(filename: str):
+def gather_skip_data(filename: str) -> Tuple[Dict[int, RunResult], Dict[int, RunResult]]:
+    """Gather the data for do_lineskip_plotting. Save the data to filename.pickle.
+    """
     nonsrq = {}
     srq = {}
     for lineskip in range(1, 40):
@@ -149,7 +153,9 @@ def gather_skip_data(filename: str):
     pickle_save((nonsrq, srq), filename)
     return (nonsrq, srq)
 
-def gather_stability_condition_confirm_data(filename: str):
+def gather_stability_condition_confirm_data(filename: str) -> Tuple[RunResult, RunResult]:
+    """Gather the data for do_confirm_stability_condition. Save the data to filename.pickle.
+    """
     const.MAX_LINE_SKIP = 1
     const.GROUP_SIZE_DISTRIBUTION = const.DIST1
     const.AVERAGE_GROUPS = 1.53
@@ -160,27 +166,37 @@ def gather_stability_condition_confirm_data(filename: str):
     return (stable, unstable)
     
 
-def gather_stability_data(filename: str):
+def gather_stability_data(filename: str) -> RunResult:
+    """Gather the data for do_stability_plotting. Save the data to filename.pickle.
+    """
     result = perf_n_runs(10, const.timesteps_in_day(), False)
     pickle_save(result, filename)
     return result
 
-def do_average_group_plotting():
+def do_average_group_plotting() -> None:
+    """Create a plot of the line length agains lambda (const.AVERAGE_GROUPS)
+    """
     # data = gather_average_group_data('average_groups')
     data = pickle_load('average_groups')
     plt.plot_average_groups(data)
     
-def do_lineskip_plotting():
+def do_lineskip_plotting() -> None:
+    """Create a plot of the mean occupancy agains maxLineSkip
+    """
     # data = gather_skip_data('lineskip')
     data = pickle_load('lineskip')
     plt.plot_lineskip(data)
     
-def do_stability_plotting():
+def do_stability_plotting() -> None:
+    """Create a plot of the line length for multiple runs at one value of lambda
+    """
     # data = gather_stability_data('stability')
     data = pickle_load('stability')
     plt.plot_stability(data, start=5)
     
-def do_confirm_stability_condition():
+def do_confirm_stability_condition() -> None:
+    """Create a plot of the line length for two values of lambda
+    """
     # data = gather_stability_condition_confirm_data('confirm_stability_condition3')
     data = pickle_load('confirm_stability_condition3')
     plt.plot_confirm_stability_condition(data)
