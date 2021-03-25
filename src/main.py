@@ -26,9 +26,9 @@ def step_time(state: State, time: int, use_srq: bool, infinite: bool=False) -> S
 
     if not infinite:
         # People arrive
-        arrivals = generate_groups(time, [1,1,1,1,1,1,1])
+        arrivals = generate_groups(time, const.GROUP_SIZE_DISTRIBUTION)
     else:
-        arrivals = generate_n_groups(time, [1,1,1,1,1,1,1], 7 + const.MAX_LINE_SKIP - len(state.line))
+        arrivals = generate_n_groups(time, const.GROUP_SIZE_DISTRIBUTION, 7 + const.MAX_LINE_SKIP - len(state.line))
         
     # Sort groups into SRQ, if necessary
     if use_srq:
@@ -124,6 +124,7 @@ def perf_n_runs(nruns: int, n_timesteps: int, use_srq:bool, infinite: bool=False
     results = []
     for _ in range(nruns):
         results.append(perf_timesteps(n_timesteps, use_srq, infinite=infinite))
+        print('.', end='')
     return join_runresults(results)
 
 def gather_average_group_data(filename: str):
@@ -148,6 +149,17 @@ def gather_skip_data(filename: str):
     pickle_save((nonsrq, srq), filename)
     return (nonsrq, srq)
 
+def gather_stability_condition_confirm_data(filename: str):
+    const.MAX_LINE_SKIP = 1
+    const.GROUP_SIZE_DISTRIBUTION = const.DIST1
+    const.AVERAGE_GROUPS = 1.53
+    stable = perf_n_runs(50, const.timesteps_in_day(), False)
+    const.AVERAGE_GROUPS = 1.59
+    unstable = perf_n_runs(50, const.timesteps_in_day(), False)
+    pickle_save((stable, unstable), filename)
+    return (stable, unstable)
+    
+
 def gather_stability_data(filename: str):
     result = perf_n_runs(10, const.timesteps_in_day(), False)
     pickle_save(result, filename)
@@ -167,15 +179,22 @@ def do_stability_plotting():
     # data = gather_stability_data('stability')
     data = pickle_load('stability')
     plt.plot_stability(data, start=5)
+    
+def do_confirm_stability_condition():
+    # data = gather_stability_condition_confirm_data('confirm_stability_condition3')
+    data = pickle_load('confirm_stability_condition3')
+    plt.plot_confirm_stability_condition(data)
 
 if __name__ == "__main__":
     # result = perf_timesteps(100, False)
     # pickle_save(result, 'test')
     # result = pickle_load('test')
     # plt.create_plots_single(result)
+    
     # do_average_group_plotting()
-    do_lineskip_plotting()
+    # do_lineskip_plotting()
     # do_stability_plotting()
+    do_confirm_stability_condition()
     
     # result = perf_n_runs(5,100,True)
     # print(len(result.timesteps))

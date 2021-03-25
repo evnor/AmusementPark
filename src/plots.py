@@ -118,3 +118,11 @@ def plot_lineskip(data: Tuple[List[RunResult], List[RunResult]]) -> None:
     ax.legend(['Non-SRQ', 'SRQ'])
     ax.set_xlabel('Max line skip')
     ax.set_ylabel('Mean occupancy')
+
+def plot_confirm_stability_condition(data: Tuple[RunResult, RunResult]) -> None:
+    stable, unstable = data
+    ax = stable.timesteps.groupby(by='time').mean().plot(y='line length')
+    unstable.timesteps.groupby(by='time').mean().plot(y='line length', ax=ax)
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Mean line length')
+    ax.legend(['λ=1.53', 'λ=1.59'])

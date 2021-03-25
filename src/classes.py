@@ -48,9 +48,10 @@ class RunResult:
     use_srq: bool
     
     def add_timestep(self, time: int, state: State):
+        occupancy = sum(t.size for t in state.departed_groups)
         timestep_row = {'time': time, 
                    'line length': len(state.line), 
-                   'boat occupancy': sum(t.size for t in state.departed_groups)
+                   'boat occupancy': occupancy,
                    }
         if self.use_srq:
             timestep_row['srq length'] = len(state.srq)
