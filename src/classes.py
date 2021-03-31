@@ -3,6 +3,8 @@ import pandas as pd
 from typing import List
 
 class Group:
+    """Represents a group. Stores the size and arrival time.
+    """
     
     def __init__(self, size: int, arrival_time: int):
         self.size = size
@@ -19,6 +21,11 @@ class Group:
 
         
 class State:
+    """Represents the state of the queues at different timesteps.
+    
+    line is the normal queue
+    srq is the single rider queue
+    """
     def __init__(self, use_srq):
         self.line = []
         self.srq = []
@@ -36,6 +43,13 @@ class State:
   
     
 class RunResult:
+    """Stores the data of a single run, or a series of runs.
+    
+    timesteps contains the columns 'time', 'line length','srq length' and 'boat occupancy'
+    groups contains the columns 'size', 'arrival time', 'departure time', 'wait time'
+    See constants.py
+    These would be static properties of this class, but this is simple.
+    """
     
     def __init__(self, use_srq: bool):
         self.timesteps = pd.DataFrame(columns = const.COLS_TIMESTEPS, dtype='float')

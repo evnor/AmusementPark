@@ -140,12 +140,13 @@ def plot_already_stable_increase_S(data: Tuple[RunResult, ...], Svals: List[int]
     for result in data:
         df_timesteps = pd.DataFrame(columns=['filtered'], data=gaussian_filter1d(result.timesteps.groupby(by='time')['line length'].median(), sigma=100, mode='nearest'))
         df_timesteps.plot(ax=ax, y='filtered', legend=False)
+        print(result.timesteps['boat occupancy'].mean())
     ax.set_xlabel('Time')
     ax.set_ylabel('Mean line length')
     ax.legend([f'S = {S}' for S in Svals])
     
 def plot_group_dist(data1: RunResult, data2: RunResult, ylim: int=40) -> None:
-    fig, ax = plt.subplots(ncols=2, sharey=True)
+    fig, ax = plt.subplots(ncols=2, sharey=True, figsize=(10,5))
     data1.groups['size'] = data1.groups['size'].astype(int) 
     data2.groups['size'] = data2.groups['size'].astype(int) 
     sns.boxplot(data=data1.groups, x='size', y='wait time', ax=ax[0])
@@ -160,12 +161,12 @@ def plot_group_dist(data1: RunResult, data2: RunResult, ylim: int=40) -> None:
     ax[1].set_title('With SRQ')
     
 def plot_hist_wait_time(data1: RunResult, data2: RunResult) -> None:
-    fig, ax = plt.subplots(ncols=2, sharey=True)
+    fig, ax = plt.subplots(ncols=2, sharey=True, figsize=(10,5))
     #Histogram of the waiting times
     ax[0] = sns.distplot(data1.groups['wait time'], bins=range(0, 110, 8), color='b', ax=ax[0], norm_hist=True, kde=False)
     ax[0].set_title("Without SRQ")
-    ax[0].set_xlabel("Timesteps")
-    ax[0].set_ylabel("Wait Time");
+    ax[0].set_xlabel("Wait time")
+    ax[0].set_ylabel("Density");
     
     # #Histogram of the queue lengths
     ax[1] = sns.distplot(data2.groups['wait time'], bins=range(0, 110, 8), color='b', ax=ax[1], norm_hist=True, kde=False)
